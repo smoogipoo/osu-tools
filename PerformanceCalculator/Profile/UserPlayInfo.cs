@@ -11,7 +11,7 @@ namespace PerformanceCalculator.Profile
     public class UserPlayInfo
     {
         public double LocalPP;
-        public double LivePP;
+        public double RemotePp;
         public double MissCount;
         public double Accuracy;
 

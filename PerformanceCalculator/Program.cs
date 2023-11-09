@@ -23,6 +23,7 @@ namespace PerformanceCalculator
     [Subcommand(typeof(SimulateListingCommand))]
     [Subcommand(typeof(LeaderboardCommand))]
     [Subcommand(typeof(LegacyScoreCommand))]
+    [Subcommand(typeof(RunHealthProcessorCommand))]
     [HelpOption("-?|-h|--help")]
     public class Program
     {

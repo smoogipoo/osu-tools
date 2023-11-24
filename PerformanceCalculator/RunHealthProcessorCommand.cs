@@ -7,9 +7,11 @@ using System.IO;
 using JetBrains.Annotations;
 using McMaster.Extensions.CommandLineUtils;
 using osu.Game.Beatmaps;
-using osu.Game.Rulesets.Osu;
+using osu.Game.Rulesets;
+using osu.Game.Rulesets.Catch.Scoring;
 using osu.Game.Rulesets.Osu.Mods;
 using osu.Game.Rulesets.Osu.Scoring;
+using osu.Game.Rulesets.Scoring;
 
 namespace PerformanceCalculator
 {
@@ -29,6 +31,10 @@ namespace PerformanceCalculator
         [Option(CommandOptionType.NoValue)]
         public bool NoComboEndBonus { get; }
 
+        [UsedImplicitly]
+        [Option(CommandOptionType.SingleValue)]
+        public int Ruleset { get; }
+
         public void OnExecute(CommandLineApplication app, IConsole console)
         {
             Console.WriteLine("beatmap\tv1_drain(s)\tv2_drain(s)\tchange(%)");
@@ -45,25 +51,50 @@ namespace PerformanceCalculator
         private void processSingle(string fileOrId)
         {
             WorkingBeatmap beatmap = ProcessorWorkingBeatmap.FromFileOrId(fileOrId);
-            OsuRuleset ruleset = new OsuRuleset();
-
-            if (!beatmap.BeatmapInfo.Ruleset.Equals(ruleset.RulesetInfo))
-                return;
+            Ruleset ruleset = LegacyHelper.GetRulesetFromLegacyID(Ruleset);
 
             IBeatmap playableBeatmap = beatmap.GetPlayableBeatmap(ruleset.RulesetInfo, new[] { new OsuModClassic() });
 
-            LegacyOsuHealthProcessor legacyProcessor = new LegacyOsuHealthProcessor(playableBeatmap.HitObjects[0].StartTime)
-            {
-                OnIterationFail = onIterationFail,
-                OnIterationSuccess = onIterationSuccess,
-                ApplyComboEndBonus = !NoComboEndBonus
-            };
+            DrainingHealthProcessor legacyProcessor;
+            DrainingHealthProcessor newProcessor;
 
-            OsuHealthProcessor newProcessor = new OsuHealthProcessor(playableBeatmap.HitObjects[0].StartTime)
+            switch (Ruleset)
             {
-                OnIterationFail = onIterationFail,
-                OnIterationSuccess = onIterationSuccess
-            };
+                case 0:
+                    legacyProcessor = new LegacyOsuHealthProcessor(playableBeatmap.HitObjects[0].StartTime)
+                    {
+                        OnIterationFail = onIterationFail,
+                        OnIterationSuccess = onIterationSuccess,
+                        ApplyComboEndBonus = !NoComboEndBonus
+                    };
+
+                    newProcessor = new OsuHealthProcessor(playableBeatmap.HitObjects[0].StartTime)
+                    {
+                        OnIterationFail = onIterationFail,
+                        OnIterationSuccess = onIterationSuccess
+                    };
+
+                    break;
+
+                case 2:
+                    legacyProcessor = new LegacyCatchHealthProcessor(playableBeatmap.HitObjects[0].StartTime)
+                    {
+                        OnIterationFail = onIterationFail,
+                        OnIterationSuccess = onIterationSuccess,
+                        ApplyComboEndBonus = !NoComboEndBonus
+                    };
+
+                    newProcessor = new CatchHealthProcessor(playableBeatmap.HitObjects[0].StartTime)
+                    {
+                        OnIterationFail = onIterationFail,
+                        OnIterationSuccess = onIterationSuccess
+                    };
+
+                    break;
+
+                default:
+                    throw new NotImplementedException();
+            }
 
             if (Log)
                 Console.WriteLine("Testing legacy processor...");

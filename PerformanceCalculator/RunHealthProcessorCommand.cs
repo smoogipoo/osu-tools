@@ -53,6 +53,10 @@ namespace PerformanceCalculator
             WorkingBeatmap beatmap = ProcessorWorkingBeatmap.FromFileOrId(fileOrId);
             Ruleset ruleset = LegacyHelper.GetRulesetFromLegacyID(Ruleset);
 
+            // Only process beatmaps that can be converted to the requested ruleset.
+            if (beatmap.BeatmapInfo.Ruleset.OnlineID != 0 && beatmap.BeatmapInfo.Ruleset.OnlineID != ruleset.RulesetInfo.OnlineID)
+                return;
+
             IBeatmap playableBeatmap = beatmap.GetPlayableBeatmap(ruleset.RulesetInfo, new[] { new OsuModClassic() });
 
             DrainingHealthProcessor legacyProcessor;

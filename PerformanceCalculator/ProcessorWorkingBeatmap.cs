@@ -45,7 +45,11 @@ namespace PerformanceCalculator
         {
             using (var stream = File.OpenRead(filename))
             using (var reader = new LineBufferedReader(stream))
-                return Decoder.GetDecoder<Beatmap>(reader).Decode(reader);
+            {
+                var decoder = Decoder.GetDecoder<Beatmap>(reader);
+                ((LegacyBeatmapDecoder)decoder).ApplyOffsets = false;
+                return decoder.Decode(reader);
+            }
         }
 
         public static ProcessorWorkingBeatmap FromFileOrId(string fileOrId)
